@@ -9,7 +9,7 @@ export const initialPrograms: Program[] = [
 export const initialData: Episode[] = [
   {
     id: 'EP001',
-    status: 'FINALIZADO',
+    status: 'PUBLICADO',
     program: 'Hub Techcast',
     episode: 'S02E01',
     theme: 'Inteligência Artificial no Dia a Dia',
@@ -32,7 +32,7 @@ export const initialData: Episode[] = [
   },
   {
     id: 'EP002',
-    status: 'APROVAÇÃO',
+    status: 'REVISÃO',
     program: 'Hub Techcast',
     episode: 'S02E02',
     theme: 'O Futuro do Trabalho Remoto',
@@ -101,7 +101,7 @@ export const initialData: Episode[] = [
   },
   {
     id: 'EP005',
-    status: 'GRAVAÇÃO',
+    status: 'PRODUÇÃO',
     program: 'Papo de Mercado',
     episode: 'S01E16',
     theme: 'Startups Bootstrapped',

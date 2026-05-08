@@ -29,8 +29,8 @@ export default function Dashboard({ data, setData, programs }: DashboardProps) {
 
   // Auto Metrics
   const totalPrograms = new Set(data.map(d => d.program)).size;
-  const inProduction = data.filter(d => ['ROTEIRO', 'GRAVAÇÃO', 'EDIÇÃO', 'APROVAÇÃO'].includes(d.status)).length;
-  const completed = data.filter(d => d.status === 'FINALIZADO').length;
+  const inProduction = data.filter(d => ['ROTEIRO', 'PRÉ-PRODUÇÃO', 'PRODUÇÃO', 'EDIÇÃO', 'REVISÃO'].includes(d.status)).length;
+  const completed = data.filter(d => d.status === 'PUBLICADO').length;
   const delayed = data.filter(d => d.status === 'ATRASADO').length;
   const published = data.filter(d => d.publication !== '-' && d.publication !== '').length;
   
@@ -46,8 +46,8 @@ export default function Dashboard({ data, setData, programs }: DashboardProps) {
       d.program.toLowerCase().includes(filterStr.toLowerCase()) ||
       d.presenter.toLowerCase().includes(filterStr.toLowerCase())
     ).sort((a, b) => {
-      if (a.status === 'FINALIZADO' && b.status !== 'FINALIZADO') return 1;
-      if (a.status !== 'FINALIZADO' && b.status === 'FINALIZADO') return -1;
+      if (a.status === 'PUBLICADO' && b.status !== 'PUBLICADO') return 1;
+      if (a.status !== 'PUBLICADO' && b.status === 'PUBLICADO') return -1;
       return 0;
     });
   }, [data, filterStr]);
@@ -59,10 +59,11 @@ export default function Dashboard({ data, setData, programs }: DashboardProps) {
         switch(newStatus) {
             case 'IDEIA': progress = 5; break;
             case 'ROTEIRO': progress = 15; break;
-            case 'GRAVAÇÃO': progress = 40; break;
-            case 'EDIÇÃO': progress = 60; break;
-            case 'APROVAÇÃO': progress = 85; break;
-            case 'FINALIZADO': progress = 100; break;
+            case 'PRÉ-PRODUÇÃO': progress = 30; break;
+            case 'PRODUÇÃO': progress = 50; break;
+            case 'EDIÇÃO': progress = 70; break;
+            case 'REVISÃO': progress = 85; break;
+            case 'PUBLICADO': progress = 100; break;
             // ATRASADO doesn't force a progress change, we just keep current
         }
         return { ...item, status: newStatus, progress };
@@ -169,7 +170,7 @@ export default function Dashboard({ data, setData, programs }: DashboardProps) {
                 <th className="px-4 py-3 min-w-[120px]">GRAVAÇÃO</th>
                 <th className="px-4 py-3 min-w-[120px]">EDIÇÃO</th>
                 <th className="px-4 py-3 min-w-[100px]">THUMBNAIL</th>
-                <th className="px-4 py-3 min-w-[100px]">APROVAÇÃO</th>
+                <th className="px-4 py-3 min-w-[100px]">REVISÃO</th>
                 <th className="px-4 py-3 min-w-[100px]">PUBLICAÇÃO</th>
                 <th className="px-4 py-3 min-w-[120px]">DATA EXIBIÇÃO</th>
                 <th className="px-4 py-3 min-w-[100px]">HORÁRIO</th>
@@ -205,10 +206,11 @@ export default function Dashboard({ data, setData, programs }: DashboardProps) {
                       >
                         <option value="IDEIA">IDEIA</option>
                         <option value="ROTEIRO">ROTEIRO</option>
-                        <option value="GRAVAÇÃO">GRAVAÇÃO</option>
+                        <option value="PRÉ-PRODUÇÃO">PRÉ-PRODUÇÃO</option>
+                        <option value="PRODUÇÃO">PRODUÇÃO</option>
                         <option value="EDIÇÃO">EDIÇÃO</option>
-                        <option value="APROVAÇÃO">APROVAÇÃO</option>
-                        <option value="FINALIZADO">FINALIZADO</option>
+                        <option value="REVISÃO">REVISÃO</option>
+                        <option value="PUBLICADO">PUBLICADO</option>
                         <option value="ATRASADO">ATRASADO</option>
                       </select>
                       <StatusBadge status={row.status} />
@@ -224,7 +226,7 @@ export default function Dashboard({ data, setData, programs }: DashboardProps) {
                       <div className="w-full bg-gray-200 rounded-full h-1.5 flex-1 relative overflow-hidden">
                         <div 
                           className={`absolute top-0 left-0 h-full rounded-full transition-all duration-500 ${
-                            row.status === 'FINALIZADO' ? 'bg-emerald-500' : 
+                            row.status === 'PUBLICADO' ? 'bg-emerald-500' : 
                             row.status === 'ATRASADO' ? 'bg-red-500' : 'bg-indigo-500'
                           }`} 
                           style={{ width: `${row.progress}%` }}

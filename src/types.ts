@@ -1,4 +1,4 @@
-export type Status = 'IDEIA' | 'ROTEIRO' | 'GRAVAÇÃO' | 'EDIÇÃO' | 'APROVAÇÃO' | 'FINALIZADO' | 'ATRASADO';
+export type Status = 'IDEIA' | 'ROTEIRO' | 'PRÉ-PRODUÇÃO' | 'PRODUÇÃO' | 'EDIÇÃO' | 'REVISÃO' | 'PUBLICADO' | 'ATRASADO';
 export type Priority = 'ALTA' | 'MÉDIA' | 'BAIXA';
 
 export interface Program {

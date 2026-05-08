@@ -29,7 +29,7 @@ export function ProgramasView({ data, setData, programs, setPrograms }: { data: 
 
   const getProgramStats = (progName: string) => {
     const eps = data.filter((d: Episode) => d.program === progName);
-    const completed = eps.filter((d: Episode) => d.status === 'FINALIZADO').length;
+    const completed = eps.filter((d: Episode) => d.status === 'PUBLICADO').length;
     const delayed = eps.filter((d: Episode) => d.status === 'ATRASADO').length;
     const published = eps.filter((d: Episode) => d.publication !== '-' && d.publication !== '').length;
     const totalHours = eps.reduce((acc: number, curr: Episode) => {
@@ -669,7 +669,7 @@ export function SponsorsView() {
 }
 
 export function PublicationsView({ data }: { data: Episode[] }) {
-  const published = data.filter(d => d.status === 'FINALIZADO');
+  const published = data.filter(d => d.status === 'PUBLICADO');
   
   return (
     <div className="p-8 h-full overflow-y-auto">

@@ -26,7 +26,17 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('DASHBOARD');
   const [data, setData] = useState<Episode[]>(() => {
     const saved = localStorage.getItem('hubOS_episodes');
-    return saved ? JSON.parse(saved) : initialData;
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return parsed.map((ep: Episode) => {
+        let status = ep.status as any;
+        if (status === 'FINALIZADO') status = 'PUBLICADO';
+        if (status === 'APROVAÇÃO') status = 'REVISÃO';
+        if (status === 'GRAVAÇÃO') status = 'PRODUÇÃO';
+        return { ...ep, status };
+      });
+    }
+    return initialData;
   });
   const [programs, setPrograms] = useState<Program[]>(() => {
     const saved = localStorage.getItem('hubOS_programs');
