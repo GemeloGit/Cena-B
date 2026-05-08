@@ -1,6 +1,15 @@
 export type Status = 'IDEIA' | 'ROTEIRO' | 'GRAVAÇÃO' | 'EDIÇÃO' | 'APROVAÇÃO' | 'FINALIZADO' | 'ATRASADO';
 export type Priority = 'ALTA' | 'MÉDIA' | 'BAIXA';
 
+export interface Program {
+  id: string;
+  name: string;
+  description: string;
+  presenter: string;
+  director: string;
+  platform: string;
+}
+
 export interface Episode {
   id: string;
   status: Status;

@@ -19,12 +19,13 @@ import {
 } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import { ProgramasView, CalendarView, TeamView, IdeasView, SponsorsView, PublicationsView, ChecklistView } from './components/Views';
-import { initialData } from './data';
-import { Episode } from './types';
+import { initialData, initialPrograms } from './data';
+import { Episode, Program } from './types';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('DASHBOARD');
   const [data, setData] = useState<Episode[]>(initialData);
+  const [programs, setPrograms] = useState<Program[]>(initialPrograms);
 
   const tabs = [
     { id: 'DASHBOARD', label: 'Centro de Produção', icon: LayoutDashboard },
@@ -40,9 +41,9 @@ export default function App() {
   const renderView = () => {
     switch (activeTab) {
       case 'DASHBOARD':
-        return <Dashboard data={data} setData={setData} />;
+        return <Dashboard data={data} setData={setData} programs={programs} />;
       case 'PROGRAMAS':
-        return <ProgramasView data={data} />;
+        return <ProgramasView data={data} programs={programs} setPrograms={setPrograms} />;
       case 'CALENDARIO':
         return <CalendarView data={data} />;
       case 'EQUIPE':

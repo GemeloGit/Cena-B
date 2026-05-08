@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Episode, Status, Priority } from '../types';
+import { Episode, Status, Priority, Program } from '../types';
 import { X, Save } from 'lucide-react';
 
 interface NewEpisodeModalProps {
@@ -7,9 +7,10 @@ interface NewEpisodeModalProps {
   onClose: () => void;
   onSave: (episode: Episode) => void;
   editEpisode?: Episode | null;
+  programs?: Program[];
 }
 
-export function NewEpisodeModal({ isOpen, onClose, onSave, editEpisode }: NewEpisodeModalProps) {
+export function NewEpisodeModal({ isOpen, onClose, onSave, editEpisode, programs = [] }: NewEpisodeModalProps) {
   const [formData, setFormData] = useState({
     program: '',
     episode: '',
@@ -112,7 +113,21 @@ export function NewEpisodeModal({ isOpen, onClose, onSave, editEpisode }: NewEpi
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    if (name === 'program') {
+      const selectedProgram = programs.find(p => p.name === value);
+      if (selectedProgram) {
+        setFormData(prev => ({ 
+          ...prev, 
+          program: selectedProgram.name,
+          presenter: selectedProgram.presenter || prev.presenter,
+          director: selectedProgram.director || prev.director,
+          platform: selectedProgram.platform || prev.platform
+        }));
+        return;
+      }
+    }
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -129,7 +144,12 @@ export function NewEpisodeModal({ isOpen, onClose, onSave, editEpisode }: NewEpi
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Programa</label>
-              <input required name="program" value={formData.program} onChange={handleChange} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="Ex: Hub Techcast" />
+              <select required name="program" value={formData.program} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <option value="">Selecione um programa...</option>
+                {programs.map(p => (
+                  <option key={p.id} value={p.name}>{p.name}</option>
+                ))}
+              </select>
             </div>
             
             <div className="col-span-1">

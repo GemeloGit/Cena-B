@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
-import { Episode } from '../types';
-import { Calendar, Users, Lightbulb, Briefcase, Send, CheckSquare, Clock, Edit, X, Trash2 } from 'lucide-react';
+import { Episode, Program } from '../types';
+import { Calendar, Users, Lightbulb, Briefcase, Send, CheckSquare, Clock, Edit, X, Trash2, Plus } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
 
-export function ProgramasView({ data }: { data: Episode[] }) {
-  const programs = Array.from(new Set(data.map(d => d.program)));
-  const [selectedProgram, setSelectedProgram] = useState<string | null>(programs[0] || null);
+export function ProgramasView({ data, programs, setPrograms }: { data: Episode[], programs: Program[], setPrograms: any }) {
+  const [selectedProgramId, setSelectedProgramId] = useState<string | null>(programs[0]?.id || null);
+  const selectedProgram = programs.find((p: Program) => p.id === selectedProgramId);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProgram, setEditingProgram] = useState<Program | null>(null);
+  const [formData, setFormData] = useState({ name: '', description: '', presenter: '', director: '', platform: '' });
 
   const getProgramStats = (progName: string) => {
-    const eps = data.filter(d => d.program === progName);
-    const completed = eps.filter(d => d.status === 'FINALIZADO').length;
-    const delayed = eps.filter(d => d.status === 'ATRASADO').length;
-    const published = eps.filter(d => d.publication !== '-' && d.publication !== '').length;
-    const totalHours = eps.reduce((acc, curr) => {
+    const eps = data.filter((d: Episode) => d.program === progName);
+    const completed = eps.filter((d: Episode) => d.status === 'FINALIZADO').length;
+    const delayed = eps.filter((d: Episode) => d.status === 'ATRASADO').length;
+    const published = eps.filter((d: Episode) => d.publication !== '-' && d.publication !== '').length;
+    const totalHours = eps.reduce((acc: number, curr: Episode) => {
       const mins = parseInt(curr.duration.split(':')[0]) || 0;
       return acc + (mins / 60);
     }, 0).toFixed(1);
@@ -20,21 +23,101 @@ export function ProgramasView({ data }: { data: Episode[] }) {
     return { total: eps.length, completed, delayed, published, totalHours, episodes: eps };
   };
 
+  const handleOpenNew = () => {
+    setEditingProgram(null);
+    setFormData({ name: '', description: '', presenter: '', director: '', platform: '' });
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = () => {
+    if (selectedProgram) {
+      setEditingProgram(selectedProgram);
+      setFormData(selectedProgram);
+      setIsModalOpen(true);
+    }
+  };
+  
+  const handleDelete = () => {
+    if (selectedProgram) {
+      if (window.confirm('Excluir programa?')) {
+        setPrograms(programs.filter((p: Program) => p.id !== selectedProgram.id));
+        setSelectedProgramId(programs.find((p: Program) => p.id !== selectedProgram.id)?.id || null);
+      }
+    }
+  }
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingProgram) {
+      setPrograms((prev: Program[]) => prev.map(p => p.id === editingProgram.id ? { ...p, ...formData } : p));
+    } else {
+      const newProgram: Program = {
+        id: `PROG${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+        ...formData
+      };
+      setPrograms((prev: Program[]) => [...prev, newProgram]);
+      setSelectedProgramId(newProgram.id);
+    }
+    setIsModalOpen(false);
+  };
+
   return (
-    <div className="flex h-full overflow-hidden bg-white">
+    <div className="flex h-full overflow-hidden bg-white relative">
+      {isModalOpen && (
+        <div className="absolute inset-0 bg-black/50 z-50 flex items-start pt-20 justify-center">
+           <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+             <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+               <h2 className="text-lg font-bold text-gray-800">{editingProgram ? 'Editar Programa' : 'Novo Programa'}</h2>
+               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5"/></button>
+             </div>
+             <form onSubmit={handleSave} className="p-6">
+               <div className="space-y-4">
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+                   <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                   <input required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Apresentador Principal</label>
+                   <input value={formData.presenter} onChange={e => setFormData({...formData, presenter: e.target.value})} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Diretor(a)</label>
+                   <input value={formData.director} onChange={e => setFormData({...formData, director: e.target.value})} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Plataforma Padrão</label>
+                   <input value={formData.platform} onChange={e => setFormData({...formData, platform: e.target.value})} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                 </div>
+               </div>
+               <div className="mt-6 flex justify-end gap-3">
+                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">Cancelar</button>
+                 <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Salvar</button>
+               </div>
+             </form>
+           </div>
+         </div>
+      )}
+
       {/* Program List Sidebar */}
-      <div className="w-64 bg-gray-50 border-r border-gray-200 overflow-y-auto">
-        <div className="p-4 border-b border-gray-200 bg-white">
+      <div className="w-64 bg-gray-50 border-r border-gray-200 overflow-y-auto flex flex-col">
+        <div className="p-4 border-b border-gray-200 bg-white flex justify-between items-center shrink-0">
           <h2 className="font-bold text-gray-800">Programas</h2>
+          <button onClick={handleOpenNew} className="text-gray-400 hover:text-indigo-600 p-1" title="Novo Programa">
+            <Plus className="w-4 h-4" />
+          </button>
         </div>
-        <div className="p-3 space-y-1">
-          {programs.map(p => (
+        <div className="p-3 space-y-1 flex-1 overflow-y-auto">
+          {programs.map((p: Program) => (
             <button 
-              key={p} 
-              onClick={() => setSelectedProgram(p)}
-              className={`w-full text-left px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${selectedProgram === p ? 'bg-indigo-100 text-indigo-700 shadow-sm' : 'text-gray-600 hover:bg-gray-200'}`}
+              key={p.id} 
+              onClick={() => setSelectedProgramId(p.id)}
+              className={`w-full text-left px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${selectedProgramId === p.id ? 'bg-indigo-100 text-indigo-700 shadow-sm' : 'text-gray-600 hover:bg-gray-200'}`}
             >
-              {p}
+              {p.name}
             </button>
           ))}
         </div>
@@ -47,14 +130,28 @@ export function ProgramasView({ data }: { data: Episode[] }) {
             <div className="flex items-center justify-between mb-8">
               <div>
                 <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest mb-1 block">Visão do Programa</span>
-                <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{selectedProgram}</h1>
+                <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{selectedProgram.name}</h1>
+                <p className="text-gray-500 mt-2">{selectedProgram.description}</p>
+                
+                <div className="flex gap-6 mt-4 text-sm text-gray-600">
+                   {selectedProgram.presenter && <div><span className="font-semibold text-gray-900">Apresentador:</span> {selectedProgram.presenter}</div>}
+                   {selectedProgram.director && <div><span className="font-semibold text-gray-900">Diretor:</span> {selectedProgram.director}</div>}
+                   {selectedProgram.platform && <div><span className="font-semibold text-gray-900">Plataforma:</span> {selectedProgram.platform}</div>}
+                </div>
               </div>
-              <button className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm">Editar Detalhes</button>
+              <div className="flex gap-2">
+                <button onClick={handleOpenEdit} className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm flex items-center gap-2">
+                  <Edit className="w-4 h-4" /> Editar
+                </button>
+                <button onClick={handleDelete} className="px-4 py-2 bg-white border border-red-200 text-red-600 rounded-md text-sm font-medium hover:bg-red-50 shadow-sm flex items-center gap-2">
+                  <Trash2 className="w-4 h-4" /> Excluir
+                </button>
+              </div>
             </div>
             
             {/* Stats */}
             {(() => {
-              const stats = getProgramStats(selectedProgram);
+              const stats = getProgramStats(selectedProgram.name);
               return (
                 <>
                   <div className="grid grid-cols-5 gap-4 mb-8">

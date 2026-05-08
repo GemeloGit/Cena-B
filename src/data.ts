@@ -1,4 +1,10 @@
-import { Episode } from './types';
+import { Episode, Program } from './types';
+
+export const initialPrograms: Program[] = [
+  { id: 'PROG001', name: 'Hub Techcast', description: 'Podcast de tecnologia', presenter: 'Marina Silva', director: 'Carlos Mendes', platform: 'YouTube / Spotify' },
+  { id: 'PROG002', name: 'Papo de Mercado', description: 'Entrevistas sobre negócios e mercado', presenter: 'Roberto Justus', director: 'Fernanda Lima', platform: 'Instagram' },
+  { id: 'PROG003', name: 'Creators em Foco', description: 'Dicas para criadores de conteúdo', presenter: 'João', director: 'Carlos Mendes', platform: 'YouTube' },
+];
 
 export const initialData: Episode[] = [
   {

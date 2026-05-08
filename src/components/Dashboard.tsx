@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Status, Episode } from '../types';
+import { Status, Episode, Program } from '../types';
 import { StatusBadge, PriorityBadge } from './StatusBadge';
 import { NewEpisodeModal } from './NewEpisodeModal';
 import { 
@@ -19,9 +19,10 @@ import {
 interface DashboardProps {
   data: Episode[];
   setData: React.Dispatch<React.SetStateAction<Episode[]>>;
+  programs: Program[];
 }
 
-export default function Dashboard({ data, setData }: DashboardProps) {
+export default function Dashboard({ data, setData, programs }: DashboardProps) {
   const [filterStr, setFilterStr] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [episodeToEdit, setEpisodeToEdit] = useState<Episode | null>(null);
@@ -103,6 +104,7 @@ export default function Dashboard({ data, setData }: DashboardProps) {
         onClose={() => setIsModalOpen(false)} 
         onSave={handleSaveEpisode}
         editEpisode={episodeToEdit}
+        programs={programs}
       />
       
       {/* Header section with KPIs */}
