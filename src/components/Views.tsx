@@ -3,6 +3,133 @@ import { Episode } from '../types';
 import { Calendar, Users, Lightbulb, Briefcase, Send, CheckSquare, Clock, Edit, X, Trash2 } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
 
+export function ProgramasView({ data }: { data: Episode[] }) {
+  const programs = Array.from(new Set(data.map(d => d.program)));
+  const [selectedProgram, setSelectedProgram] = useState<string | null>(programs[0] || null);
+
+  const getProgramStats = (progName: string) => {
+    const eps = data.filter(d => d.program === progName);
+    const completed = eps.filter(d => d.status === 'FINALIZADO').length;
+    const delayed = eps.filter(d => d.status === 'ATRASADO').length;
+    const published = eps.filter(d => d.publication !== '-' && d.publication !== '').length;
+    const totalHours = eps.reduce((acc, curr) => {
+      const mins = parseInt(curr.duration.split(':')[0]) || 0;
+      return acc + (mins / 60);
+    }, 0).toFixed(1);
+    
+    return { total: eps.length, completed, delayed, published, totalHours, episodes: eps };
+  };
+
+  return (
+    <div className="flex h-full overflow-hidden bg-white">
+      {/* Program List Sidebar */}
+      <div className="w-64 bg-gray-50 border-r border-gray-200 overflow-y-auto">
+        <div className="p-4 border-b border-gray-200 bg-white">
+          <h2 className="font-bold text-gray-800">Programas</h2>
+        </div>
+        <div className="p-3 space-y-1">
+          {programs.map(p => (
+            <button 
+              key={p} 
+              onClick={() => setSelectedProgram(p)}
+              className={`w-full text-left px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${selectedProgram === p ? 'bg-indigo-100 text-indigo-700 shadow-sm' : 'text-gray-600 hover:bg-gray-200'}`}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+      </div>
+      
+      {/* Program Details */}
+      <div className="flex-1 overflow-y-auto p-8 relative">
+        {selectedProgram ? (
+          <div className="max-w-5xl mx-auto">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest mb-1 block">Visão do Programa</span>
+                <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{selectedProgram}</h1>
+              </div>
+              <button className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm">Editar Detalhes</button>
+            </div>
+            
+            {/* Stats */}
+            {(() => {
+              const stats = getProgramStats(selectedProgram);
+              return (
+                <>
+                  <div className="grid grid-cols-5 gap-4 mb-8">
+                    <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                      <div className="text-xs text-gray-500 uppercase font-semibold mb-1">Total Eps</div>
+                      <div className="text-3xl font-bold text-gray-900">{stats.total}</div>
+                    </div>
+                    <div className="bg-emerald-50/50 p-5 rounded-xl border border-emerald-100 shadow-sm">
+                      <div className="text-xs text-emerald-600 uppercase font-semibold mb-1">Concluídos</div>
+                      <div className="text-3xl font-bold text-emerald-700">{stats.completed}</div>
+                    </div>
+                    <div className="bg-red-50/50 p-5 rounded-xl border border-red-100 shadow-sm">
+                      <div className="text-xs text-red-600 uppercase font-semibold mb-1">Atrasados</div>
+                      <div className="text-3xl font-bold text-red-700">{stats.delayed}</div>
+                    </div>
+                    <div className="bg-purple-50/50 p-5 rounded-xl border border-purple-100 shadow-sm">
+                      <div className="text-xs text-purple-600 uppercase font-semibold mb-1">Publicados</div>
+                      <div className="text-3xl font-bold text-purple-700">{stats.published}</div>
+                    </div>
+                    <div className="bg-amber-50/50 p-5 rounded-xl border border-amber-100 shadow-sm">
+                      <div className="text-xs text-amber-600 uppercase font-semibold mb-1">Horas Prev</div>
+                      <div className="text-3xl font-bold text-amber-700">{stats.totalHours}h</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-gray-800">Lista de Episódios</h3>
+                    <div className="text-sm text-gray-500 font-medium">Mostrando todos os episódios</div>
+                  </div>
+
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <table className="w-full text-left text-sm whitespace-nowrap">
+                      <thead className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase font-semibold tracking-wider">
+                        <tr>
+                          <th className="px-6 py-3">Episódio</th>
+                          <th className="px-6 py-3">Status</th>
+                          <th className="px-6 py-3 w-full">Tema / Assunto</th>
+                          <th className="px-6 py-3">Exibição</th>
+                          <th className="px-6 py-3">Responsável</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {stats.episodes.map(ep => (
+                          <tr key={ep.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 font-mono text-xs text-gray-500">{ep.episode}</td>
+                            <td className="px-6 py-4"><StatusBadge status={ep.status} /></td>
+                            <td className="px-6 py-4 font-medium text-gray-900 truncate max-w-md">{ep.theme}</td>
+                            <td className="px-6 py-4 text-gray-600 font-medium">{ep.airDate}</td>
+                            <td className="px-6 py-4 text-gray-600">
+                              <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 rounded bg-indigo-100 text-indigo-700 font-bold text-[10px] flex items-center justify-center">
+                                  {ep.responsible.split(' ').map(n => n[0]).join('')}
+                                </div>
+                                {ep.responsible}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        ) : (
+          <div className="h-full flex items-center justify-center text-gray-400">
+            Selecione um programa à esquerda
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function CalendarView({ data }: { data: Episode[] }) {
   // Simple representation of a calendar using list
   const upcoming = [...data].filter(d => d.airDate && d.airDate !== 'Em aberto' && d.airDate !== '-').sort((a, b) => a.airDate.localeCompare(b.airDate));

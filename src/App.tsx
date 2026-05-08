@@ -14,10 +14,11 @@ import {
   CheckSquare,
   Search,
   Settings,
-  Bell
+  Bell,
+  Tv
 } from 'lucide-react';
 import Dashboard from './components/Dashboard';
-import { CalendarView, TeamView, IdeasView, SponsorsView, PublicationsView, ChecklistView } from './components/Views';
+import { ProgramasView, CalendarView, TeamView, IdeasView, SponsorsView, PublicationsView, ChecklistView } from './components/Views';
 import { initialData } from './data';
 import { Episode } from './types';
 
@@ -27,6 +28,7 @@ export default function App() {
 
   const tabs = [
     { id: 'DASHBOARD', label: 'Centro de Produção', icon: LayoutDashboard },
+    { id: 'PROGRAMAS', label: 'Programas', icon: Tv },
     { id: 'CALENDARIO', label: 'Calendário', icon: Calendar },
     { id: 'EQUIPE', label: 'Equipe', icon: Users },
     { id: 'IDEIAS', label: 'Banco de Ideias', icon: Lightbulb },
@@ -39,6 +41,8 @@ export default function App() {
     switch (activeTab) {
       case 'DASHBOARD':
         return <Dashboard data={data} setData={setData} />;
+      case 'PROGRAMAS':
+        return <ProgramasView data={data} />;
       case 'CALENDARIO':
         return <CalendarView data={data} />;
       case 'EQUIPE':

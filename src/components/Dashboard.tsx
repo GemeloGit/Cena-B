@@ -12,7 +12,8 @@ import {
   AlertCircle,
   UploadCloud,
   Film,
-  Edit2
+  Edit2,
+  Trash2
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -89,6 +90,12 @@ export default function Dashboard({ data, setData }: DashboardProps) {
     setIsModalOpen(true);
   };
 
+  const handleDeleteEpisode = (id: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este episódio?')) {
+      setData(prev => prev.filter(ep => ep.id !== id));
+    }
+  };
+
   return (
     <div className="h-full flex flex-col pt-6 pb-0 overflow-hidden bg-[#F9FAFB]">
       <NewEpisodeModal 
@@ -148,8 +155,8 @@ export default function Dashboard({ data, setData }: DashboardProps) {
             <thead className="sticky top-0 bg-white z-10 text-xs text-gray-500 uppercase font-semibold tracking-wider border-b border-gray-200 shadow-sm">
               <tr>
                 <th className="px-4 py-3 sticky left-0 bg-white z-20 border-r border-gray-200 w-[50px] min-w-[50px] text-center">#</th>
-                <th className="px-4 py-3 sticky left-[50px] bg-white z-20 border-r border-gray-200 w-[60px] min-w-[60px] text-center">AÇÃO</th>
-                <th className="px-4 py-3 sticky left-[110px] bg-white z-20 border-r border-gray-200 min-w-[140px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">STATUS</th>
+                <th className="px-4 py-3 sticky left-[50px] bg-white z-20 border-r border-gray-200 w-[80px] min-w-[80px] text-center">AÇÃO</th>
+                <th className="px-4 py-3 sticky left-[130px] bg-white z-20 border-r border-gray-200 min-w-[140px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">STATUS</th>
                 <th className="px-4 py-3 min-w-[160px]">PROGRAMA</th>
                 <th className="px-4 py-3 min-w-[100px]">EPISÓDIO</th>
                 <th className="px-4 py-3 min-w-[280px]">TEMA / ASSUNTO</th>
@@ -178,11 +185,16 @@ export default function Dashboard({ data, setData }: DashboardProps) {
                     {index + 1}
                   </td>
                   <td className="px-4 py-2 sticky left-[50px] bg-white group-hover:bg-indigo-50/50 z-10 border-r border-gray-100 text-center">
-                    <button onClick={() => openEdit(row)} className="text-gray-400 hover:text-indigo-600 transition-colors" title="Editar Episódio">
-                      <Edit2 className="w-4 h-4 mx-auto" />
-                    </button>
+                    <div className="flex items-center justify-center gap-2">
+                      <button onClick={() => openEdit(row)} className="text-gray-400 hover:text-indigo-600 transition-colors" title="Editar Episódio">
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => handleDeleteEpisode(row.id)} className="text-gray-400 hover:text-red-600 transition-colors" title="Excluir Episódio">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
-                  <td className="px-4 py-2 sticky left-[110px] bg-white group-hover:bg-indigo-50/50 z-10 border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] cursor-pointer">
+                  <td className="px-4 py-2 sticky left-[130px] bg-white group-hover:bg-indigo-50/50 z-10 border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] cursor-pointer">
                     <div className="relative inline-block w-full">
                       <select 
                         value={row.status} 

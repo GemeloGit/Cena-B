@@ -26,6 +26,16 @@ export function NewEpisodeModal({ isOpen, onClose, onSave, editEpisode }: NewEpi
 
   useEffect(() => {
     if (editEpisode) {
+      let formattedDate = '';
+      if (editEpisode.airDate && editEpisode.airDate !== '-' && editEpisode.airDate !== 'Em aberto') {
+         const parts = editEpisode.airDate.split('/');
+         if (parts.length === 3) {
+           formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+         } else {
+           formattedDate = editEpisode.airDate;
+         }
+      }
+      
       setFormData({
         program: editEpisode.program,
         episode: editEpisode.episode,
@@ -36,7 +46,7 @@ export function NewEpisodeModal({ isOpen, onClose, onSave, editEpisode }: NewEpi
         priority: editEpisode.priority,
         duration: editEpisode.duration,
         platform: editEpisode.platform,
-        airDate: editEpisode.airDate === '-' || editEpisode.airDate === 'Em aberto' ? '' : editEpisode.airDate,
+        airDate: formattedDate,
         time: editEpisode.time,
       });
     } else {
@@ -61,10 +71,18 @@ export function NewEpisodeModal({ isOpen, onClose, onSave, editEpisode }: NewEpi
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    let formattedAirDate = formData.airDate;
+    if (formattedAirDate && formattedAirDate.includes('-')) {
+      const parts = formattedAirDate.split('-');
+      if (parts.length === 3) {
+        formattedAirDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+    }
+
     const submittedEpisode: Episode = editEpisode ? {
       ...editEpisode,
       ...formData,
-      airDate: formData.airDate || 'Em aberto',
+      airDate: formattedAirDate || 'Em aberto',
     } : {
       id: `EP${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
       status: 'IDEIA',
@@ -79,7 +97,7 @@ export function NewEpisodeModal({ isOpen, onClose, onSave, editEpisode }: NewEpi
       thumbnail: '-',
       approval: '-',
       publication: '-',
-      airDate: formData.airDate || 'Em aberto',
+      airDate: formattedAirDate || 'Em aberto',
       time: formData.time,
       platform: formData.platform,
       responsible: formData.responsible || 'Pendente',
@@ -141,12 +159,12 @@ export function NewEpisodeModal({ isOpen, onClose, onSave, editEpisode }: NewEpi
 
             <div className="col-span-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">Data Exibição</label>
-              <input name="airDate" value={formData.airDate} onChange={handleChange} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="DD/MM/AAAA" />
+              <input name="airDate" value={formData.airDate} onChange={handleChange} type="date" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="DD/MM/AAAA" />
             </div>
 
             <div className="col-span-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">Horário</label>
-              <input name="time" value={formData.time} onChange={handleChange} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="19:00" />
+              <input name="time" value={formData.time} onChange={handleChange} type="time" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="19:00" />
             </div>
 
             <div className="col-span-1">
