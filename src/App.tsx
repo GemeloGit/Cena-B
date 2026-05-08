@@ -57,7 +57,7 @@ export default function App() {
       case 'DASHBOARD':
         return <Dashboard data={data} setData={setData} programs={programs} />;
       case 'PROGRAMAS':
-        return <ProgramasView data={data} programs={programs} setPrograms={setPrograms} />;
+        return <ProgramasView data={data} setData={setData} programs={programs} setPrograms={setPrograms} />;
       case 'CALENDARIO':
         return <CalendarView data={data} />;
       case 'EQUIPE':

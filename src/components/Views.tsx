@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Episode, Program, Priority } from '../types';
 import { Calendar, Users, Lightbulb, Briefcase, Send, CheckSquare, Clock, Edit, X, Trash2, Plus } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
+import { NewEpisodeModal } from './NewEpisodeModal';
 
 function useStickyState<T>(defaultValue: T, key: string): [T, React.Dispatch<React.SetStateAction<T>>] {
   const [value, setValue] = useState<T>(() => {
@@ -16,12 +17,15 @@ function useStickyState<T>(defaultValue: T, key: string): [T, React.Dispatch<Rea
   return [value, setValue];
 }
 
-export function ProgramasView({ data, programs, setPrograms }: { data: Episode[], programs: Program[], setPrograms: any }) {
+export function ProgramasView({ data, setData, programs, setPrograms }: { data: Episode[], setData: any, programs: Program[], setPrograms: any }) {
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(programs[0]?.id || null);
   const selectedProgram = programs.find((p: Program) => p.id === selectedProgramId);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
   const [formData, setFormData] = useState({ name: '', description: '', presenter: '', director: '', platform: '', producer: '', notes: '' });
+
+  const [isEpisodeModalOpen, setIsEpisodeModalOpen] = useState(false);
+  const [editingEpisode, setEditingEpisode] = useState<Episode | null>(null);
 
   const getProgramStats = (progName: string) => {
     const eps = data.filter((d: Episode) => d.program === progName);
@@ -207,7 +211,9 @@ export function ProgramasView({ data, programs, setPrograms }: { data: Episode[]
                   
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-bold text-gray-800">Lista de Episódios</h3>
-                    <div className="text-sm text-gray-500 font-medium">Mostrando todos os episódios</div>
+                    <div className="flex gap-2 text-sm">
+                      <button onClick={() => { setEditingEpisode(null); setIsEpisodeModalOpen(true); }} className="px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-medium">+ Novo Episódio</button>
+                    </div>
                   </div>
 
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -219,6 +225,7 @@ export function ProgramasView({ data, programs, setPrograms }: { data: Episode[]
                           <th className="px-6 py-3 w-full">Tema / Assunto</th>
                           <th className="px-6 py-3">Exibição</th>
                           <th className="px-6 py-3">Responsável</th>
+                          <th className="px-6 py-3">Ações</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
@@ -231,9 +238,17 @@ export function ProgramasView({ data, programs, setPrograms }: { data: Episode[]
                             <td className="px-6 py-4 text-gray-600">
                               <div className="flex items-center gap-2">
                                 <div className="w-5 h-5 rounded bg-indigo-100 text-indigo-700 font-bold text-[10px] flex items-center justify-center">
-                                  {ep.responsible.split(' ').map(n => n[0]).join('')}
+                                  {ep.responsible.split(' ').map((n: string) => n[0]).join('')}
                                 </div>
                                 {ep.responsible}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="flex justify-end gap-2">
+                                <button onClick={() => { setEditingEpisode(ep); setIsEpisodeModalOpen(true); }} className="text-gray-400 hover:text-indigo-600"><Edit className="w-4 h-4" /></button>
+                                <button onClick={() => {
+                                  if(window.confirm('Excluir episódio?')) setData((prev: Episode[]) => prev.filter(e => e.id !== ep.id));
+                                }} className="text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                               </div>
                             </td>
                           </tr>
@@ -251,6 +266,23 @@ export function ProgramasView({ data, programs, setPrograms }: { data: Episode[]
           </div>
         )}
       </div>
+
+      <NewEpisodeModal 
+        isOpen={isEpisodeModalOpen}
+        onClose={() => setIsEpisodeModalOpen(false)}
+        programs={programs}
+        editEpisode={editingEpisode}
+        onSave={(dataToSave: any) => {
+          if (editingEpisode) {
+            setData((prev: Episode[]) => prev.map(ep => ep.id === editingEpisode.id ? dataToSave : ep));
+          } else {
+            // Force the episode to be associated with the currently selected program if not set
+            if(!dataToSave.program && selectedProgram) dataToSave.program = selectedProgram.name;
+            setData((prev: Episode[]) => [...prev, dataToSave]);
+          }
+          setIsEpisodeModalOpen(false);
+        }}
+      />
     </div>
   );
 }
@@ -489,7 +521,10 @@ export function IdeasView({ data, setData, programs }: { data: Episode[], setDat
           <div key={ep.id} className="bg-yellow-50 rounded-xl border border-yellow-200 p-5 shadow-sm">
             <div className="flex justify-between items-start mb-3">
               <span className="text-xs font-bold text-yellow-700 uppercase">{ep.program}</span>
-              <button type="button" onClick={() => handleEdit(ep)} className="text-yellow-600 hover:text-yellow-800"><Edit className="w-4 h-4" /></button>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => handleEdit(ep)} className="text-yellow-600 hover:text-yellow-800"><Edit className="w-4 h-4" /></button>
+                <button type="button" onClick={() => { if(window.confirm('Excluir ideia?')) setData((prev: Episode[]) => prev.filter(e => e.id !== ep.id)); }} className="text-yellow-600 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+              </div>
             </div>
             <h3 className="font-bold text-gray-900 mb-2">{ep.theme}</h3>
             <p className="text-sm text-gray-600 line-clamp-3">{ep.notes || 'Sem descrição.'}</p>
@@ -619,7 +654,10 @@ export function SponsorsView() {
                   <td className="px-6 py-4 text-gray-600">{sub.prog}</td>
                   <td className="px-6 py-4 font-medium text-gray-900">{sub.value}</td>
                   <td className="px-6 py-4 text-right">
-                    <button onClick={() => handleEdit(sub)} className="text-gray-400 hover:text-indigo-600"><Edit className="w-4 h-4" /></button>
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => handleEdit(sub)} className="text-gray-400 hover:text-indigo-600"><Edit className="w-4 h-4" /></button>
+                      <button onClick={() => { if(window.confirm('Excluir patrocinador?')) setSponsors(sponsors.filter(s => s.id !== sub.id)); }} className="text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                    </div>
                   </td>
                 </tr>
              ))}
