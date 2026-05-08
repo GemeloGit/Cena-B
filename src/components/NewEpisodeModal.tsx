@@ -21,19 +21,19 @@ export function NewEpisodeModal({ isOpen, onClose, onSave, editEpisode, programs
     priority: 'MÉDIA' as Priority,
     duration: '00:00',
     platform: 'YouTube',
-    airDate: '',
+    recording: '',
     time: '19:00',
   });
 
   useEffect(() => {
     if (editEpisode) {
       let formattedDate = '';
-      if (editEpisode.airDate && editEpisode.airDate !== '-' && editEpisode.airDate !== 'Em aberto') {
-         const parts = editEpisode.airDate.split('/');
+      if (editEpisode.recording && editEpisode.recording !== '-' && editEpisode.recording !== 'Em aberto') {
+         const parts = editEpisode.recording.split('/');
          if (parts.length === 3) {
            formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
          } else {
-           formattedDate = editEpisode.airDate;
+           formattedDate = editEpisode.recording;
          }
       }
       
@@ -47,7 +47,7 @@ export function NewEpisodeModal({ isOpen, onClose, onSave, editEpisode, programs
         priority: editEpisode.priority,
         duration: editEpisode.duration,
         platform: editEpisode.platform,
-        airDate: formattedDate,
+        recording: formattedDate,
         time: editEpisode.time,
       });
     } else {
@@ -61,7 +61,7 @@ export function NewEpisodeModal({ isOpen, onClose, onSave, editEpisode, programs
         priority: 'MÉDIA' as Priority,
         duration: '00:00',
         platform: 'YouTube',
-        airDate: '',
+        recording: '',
         time: '19:00',
       });
     }
@@ -72,18 +72,18 @@ export function NewEpisodeModal({ isOpen, onClose, onSave, editEpisode, programs
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    let formattedAirDate = formData.airDate;
-    if (formattedAirDate && formattedAirDate.includes('-')) {
-      const parts = formattedAirDate.split('-');
+    let formattedRecording = formData.recording;
+    if (formattedRecording && formattedRecording.includes('-')) {
+      const parts = formattedRecording.split('-');
       if (parts.length === 3) {
-        formattedAirDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        formattedRecording = `${parts[2]}/${parts[1]}/${parts[0]}`;
       }
     }
 
     const submittedEpisode: Episode = editEpisode ? {
       ...editEpisode,
       ...formData,
-      airDate: formattedAirDate || 'Em aberto',
+      recording: formattedRecording || 'Em aberto',
     } : {
       id: `EP${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
       status: 'IDEIA',
@@ -93,12 +93,12 @@ export function NewEpisodeModal({ isOpen, onClose, onSave, editEpisode, programs
       presenter: formData.presenter,
       director: formData.director,
       script: '-',
-      recording: '-',
+      recording: formattedRecording || 'Em aberto',
       editing: '-',
       thumbnail: '-',
       approval: '-',
       publication: '-',
-      airDate: formattedAirDate || 'Em aberto',
+      airDate: 'Em aberto', // default airDate
       time: formData.time,
       platform: formData.platform,
       responsible: formData.responsible || 'Pendente',
@@ -159,7 +159,7 @@ export function NewEpisodeModal({ isOpen, onClose, onSave, editEpisode, programs
 
             <div className="col-span-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">Duração Prevista</label>
-              <input name="duration" value={formData.duration} onChange={handleChange} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="Ex: 45:00" />
+              <input name="duration" value={formData.duration} onChange={handleChange} type="time" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="Ex: 45:00" />
             </div>
 
             <div className="col-span-2">
@@ -178,8 +178,8 @@ export function NewEpisodeModal({ isOpen, onClose, onSave, editEpisode, programs
             </div>
 
             <div className="col-span-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Data Exibição</label>
-              <input name="airDate" value={formData.airDate} onChange={handleChange} type="date" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="DD/MM/AAAA" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Data de Gravação</label>
+              <input name="recording" value={formData.recording} onChange={handleChange} type="date" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="DD/MM/AAAA" />
             </div>
 
             <div className="col-span-1">

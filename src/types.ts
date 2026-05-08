@@ -8,6 +8,8 @@ export interface Program {
   presenter: string;
   director: string;
   platform: string;
+  producer?: string;
+  notes?: string;
 }
 
 export interface Episode {

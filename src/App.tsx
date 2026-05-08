@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Calendar, 
@@ -24,8 +24,22 @@ import { Episode, Program } from './types';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('DASHBOARD');
-  const [data, setData] = useState<Episode[]>(initialData);
-  const [programs, setPrograms] = useState<Program[]>(initialPrograms);
+  const [data, setData] = useState<Episode[]>(() => {
+    const saved = localStorage.getItem('hubOS_episodes');
+    return saved ? JSON.parse(saved) : initialData;
+  });
+  const [programs, setPrograms] = useState<Program[]>(() => {
+    const saved = localStorage.getItem('hubOS_programs');
+    return saved ? JSON.parse(saved) : initialPrograms;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('hubOS_episodes', JSON.stringify(data));
+  }, [data]);
+
+  useEffect(() => {
+    localStorage.setItem('hubOS_programs', JSON.stringify(programs));
+  }, [programs]);
 
   const tabs = [
     { id: 'DASHBOARD', label: 'Centro de Produção', icon: LayoutDashboard },
@@ -49,7 +63,7 @@ export default function App() {
       case 'EQUIPE':
         return <TeamView />;
       case 'IDEIAS':
-        return <IdeasView data={data} />;
+        return <IdeasView data={data} setData={setData} programs={programs} />;
       case 'PATROCINADORES':
         return <SponsorsView />;
       case 'PUBLICACOES':

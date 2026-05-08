@@ -1,14 +1,27 @@
-import React, { useState } from 'react';
-import { Episode, Program } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Episode, Program, Priority } from '../types';
 import { Calendar, Users, Lightbulb, Briefcase, Send, CheckSquare, Clock, Edit, X, Trash2, Plus } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
+
+function useStickyState<T>(defaultValue: T, key: string): [T, React.Dispatch<React.SetStateAction<T>>] {
+  const [value, setValue] = useState<T>(() => {
+    const stickyValue = window.localStorage.getItem(key);
+    return stickyValue !== null
+      ? JSON.parse(stickyValue)
+      : defaultValue;
+  });
+  useEffect(() => {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  }, [key, value]);
+  return [value, setValue];
+}
 
 export function ProgramasView({ data, programs, setPrograms }: { data: Episode[], programs: Program[], setPrograms: any }) {
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(programs[0]?.id || null);
   const selectedProgram = programs.find((p: Program) => p.id === selectedProgramId);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
-  const [formData, setFormData] = useState({ name: '', description: '', presenter: '', director: '', platform: '' });
+  const [formData, setFormData] = useState({ name: '', description: '', presenter: '', director: '', platform: '', producer: '', notes: '' });
 
   const getProgramStats = (progName: string) => {
     const eps = data.filter((d: Episode) => d.program === progName);
@@ -25,7 +38,7 @@ export function ProgramasView({ data, programs, setPrograms }: { data: Episode[]
 
   const handleOpenNew = () => {
     setEditingProgram(null);
-    setFormData({ name: '', description: '', presenter: '', director: '', platform: '' });
+    setFormData({ name: '', description: '', presenter: '', director: '', platform: '', producer: '', notes: '' });
     setIsModalOpen(true);
   };
 
@@ -89,8 +102,16 @@ export function ProgramasView({ data, programs, setPrograms }: { data: Episode[]
                    <input value={formData.director} onChange={e => setFormData({...formData, director: e.target.value})} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" />
                  </div>
                  <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Produtor(a)</label>
+                   <input value={formData.producer || ''} onChange={e => setFormData({...formData, producer: e.target.value})} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                 </div>
+                 <div>
                    <label className="block text-sm font-medium text-gray-700 mb-1">Plataforma Padrão</label>
                    <input value={formData.platform} onChange={e => setFormData({...formData, platform: e.target.value})} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Observações</label>
+                   <textarea rows={3} value={formData.notes || ''} onChange={e => setFormData({...formData, notes: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" />
                  </div>
                </div>
                <div className="mt-6 flex justify-end gap-3">
@@ -136,8 +157,15 @@ export function ProgramasView({ data, programs, setPrograms }: { data: Episode[]
                 <div className="flex gap-6 mt-4 text-sm text-gray-600">
                    {selectedProgram.presenter && <div><span className="font-semibold text-gray-900">Apresentador:</span> {selectedProgram.presenter}</div>}
                    {selectedProgram.director && <div><span className="font-semibold text-gray-900">Diretor:</span> {selectedProgram.director}</div>}
+                   {selectedProgram.producer && <div><span className="font-semibold text-gray-900">Produtor:</span> {selectedProgram.producer}</div>}
                    {selectedProgram.platform && <div><span className="font-semibold text-gray-900">Plataforma:</span> {selectedProgram.platform}</div>}
                 </div>
+                {selectedProgram.notes && (
+                  <div className="mt-4 p-4 bg-gray-50 rounded-lg text-sm text-gray-700 border border-gray-100">
+                    <span className="font-semibold text-gray-900 block mb-1">Observações:</span>
+                    {selectedProgram.notes}
+                  </div>
+                )}
               </div>
               <div className="flex gap-2">
                 <button onClick={handleOpenEdit} className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm flex items-center gap-2">
@@ -266,13 +294,13 @@ export function CalendarView({ data }: { data: Episode[] }) {
 }
 
 export function TeamView() {
-  const [team, setTeam] = useState([
+  const [team, setTeam] = useStickyState([
     { name: 'Ana Costa', role: 'Gerente de Produção', email: 'ana@hub.com', avatar: 'AC' },
     { name: 'Carlos Mendes', role: 'Diretor Chefe', email: 'carlos@hub.com', avatar: 'CM' },
     { name: 'Marina Silva', role: 'Apresentadora', email: 'marina@hub.com', avatar: 'MS' },
     { name: 'João Marcos', role: 'Editor Sênior', email: 'joao@hub.com', avatar: 'JM' },
     { name: 'Maria Eduarda', role: 'Social Media', email: 'maria@hub.com', avatar: 'ME' },
-  ]);
+  ], 'hubOS_team');
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', role: '', email: '' });
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -373,24 +401,91 @@ export function TeamView() {
   );
 }
 
-export function IdeasView({ data }: { data: Episode[] }) {
+export function IdeasView({ data, setData, programs }: { data: Episode[], setData: any, programs: Program[] }) {
   const ideas = data.filter(d => d.status === 'IDEIA');
-  
+  const [isOpen, setIsOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({ program: '', theme: '', notes: '' });
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingId) {
+      setData((prev: Episode[]) => prev.map(ep => ep.id === editingId ? { ...ep, program: formData.program, theme: formData.theme, notes: formData.notes } : ep));
+    } else {
+      const newIdea: Episode = {
+        id: `EP${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+        status: 'IDEIA',
+        program: formData.program,
+        theme: formData.theme,
+        notes: formData.notes,
+        episode: 'Novo', presenter: '', director: '', script: '-', recording: '-', editing: '-', thumbnail: '-', approval: '-', publication: '-', airDate: '-', time: '', platform: '', responsible: 'Pendente', priority: 'MÉDIA' as Priority, duration: '00:00', progress: 0
+      };
+      setData((prev: Episode[]) => [...prev, newIdea]);
+    }
+    setIsOpen(false);
+  };
+
+  const handleEdit = (ep: Episode) => {
+    setFormData({ program: ep.program, theme: ep.theme, notes: ep.notes || '' });
+    setEditingId(ep.id);
+    setIsOpen(true);
+  };
+
+  const handleOpenNew = () => {
+    setFormData({ program: '', theme: '', notes: '' });
+    setEditingId(null);
+    setIsOpen(true);
+  };
+
   return (
-    <div className="p-8 h-full overflow-y-auto">
+    <div className="p-8 h-full overflow-y-auto relative">
+      {isOpen && (
+         <div className="absolute inset-0 bg-black/50 z-50 flex items-start pt-20 justify-center">
+           <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+             <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+               <h2 className="text-lg font-bold text-gray-800">{editingId ? 'Editar Ideia' : 'Nova Ideia'}</h2>
+               <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5"/></button>
+             </div>
+             <form onSubmit={handleSave} className="p-6">
+               <div className="space-y-4">
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Programa</label>
+                   <select required value={formData.program} onChange={e => setFormData({...formData, program: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                     <option value="">Selecione...</option>
+                     {programs.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                   </select>
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Tema sugerido</label>
+                   <input required value={formData.theme} onChange={e => setFormData({...formData, theme: e.target.value})} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Detalhes da Ideia</label>
+                   <textarea rows={4} value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                 </div>
+               </div>
+               <div className="mt-6 flex justify-end gap-3">
+                 <button type="button" onClick={() => setIsOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md">Cancelar</button>
+                 <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Salvar</button>
+               </div>
+             </form>
+           </div>
+         </div>
+      )}
+
       <div className="mb-6 flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Banco de Ideias</h2>
           <p className="text-gray-500">Pautas e sugestões para próximos episódios</p>
         </div>
-        <button className="px-4 py-2 bg-indigo-600 rounded-md text-sm font-medium text-white shadow-sm">+ Nova Ideia</button>
+        <button onClick={handleOpenNew} className="px-4 py-2 bg-indigo-600 rounded-md text-sm font-medium text-white shadow-sm">+ Nova Ideia</button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {ideas.map((ep) => (
           <div key={ep.id} className="bg-yellow-50 rounded-xl border border-yellow-200 p-5 shadow-sm">
             <div className="flex justify-between items-start mb-3">
               <span className="text-xs font-bold text-yellow-700 uppercase">{ep.program}</span>
-              <button className="text-yellow-600 hover:text-yellow-800"><Edit className="w-4 h-4" /></button>
+              <button type="button" onClick={() => handleEdit(ep)} className="text-yellow-600 hover:text-yellow-800"><Edit className="w-4 h-4" /></button>
             </div>
             <h3 className="font-bold text-gray-900 mb-2">{ep.theme}</h3>
             <p className="text-sm text-gray-600 line-clamp-3">{ep.notes || 'Sem descrição.'}</p>
@@ -405,19 +500,35 @@ export function IdeasView({ data }: { data: Episode[] }) {
 }
 
 export function SponsorsView() {
-  const [sponsors, setSponsors] = useState([
-    { name: 'TechBank', status: 'Ativo', tier: 'Master', value: 'R$ 50k / mês', prog: 'Hub Techcast' },
-    { name: 'CloudFoods', status: 'Negociação', tier: 'Apoio', value: 'R$ 15k / mês', prog: 'Papo de Mercado' },
-    { name: 'GamerGear', status: 'Ativo', tier: 'Cotas Locais', value: 'R$ 5k / video', prog: 'Creators em Foco' },
-  ]);
+  const [sponsors, setSponsors] = useStickyState([
+    { id: '1', name: 'TechBank', status: 'Ativo', tier: 'Master', value: 'R$ 50k / mês', prog: 'Hub Techcast', notes: '' },
+    { id: '2', name: 'CloudFoods', status: 'Negociação', tier: 'Apoio', value: 'R$ 15k / mês', prog: 'Papo de Mercado', notes: '' },
+    { id: '3', name: 'GamerGear', status: 'Ativo', tier: 'Cotas Locais', value: 'R$ 5k / video', prog: 'Creators em Foco', notes: '' },
+  ], 'hubOS_sponsors');
   const [isOpen, setIsOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', status: 'Ativo', tier: 'Master', value: '', prog: '' });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({ name: '', status: 'Ativo', tier: 'Master', value: '', prog: '', notes: '' });
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    setSponsors([...sponsors, formData]);
+    if (editingId) {
+      setSponsors(prev => prev.map(s => s.id === editingId ? { ...s, ...formData } : s));
+    } else {
+      setSponsors([...sponsors, { id: Math.random().toString(), ...formData }]);
+    }
     setIsOpen(false);
-    setFormData({ name: '', status: 'Ativo', tier: 'Master', value: '', prog: '' });
+  };
+  
+  const handleEdit = (s: any) => {
+    setFormData(s);
+    setEditingId(s.id);
+    setIsOpen(true);
+  };
+
+  const handleOpenNew = () => {
+    setFormData({ name: '', status: 'Ativo', tier: 'Master', value: '', prog: '', notes: '' });
+    setEditingId(null);
+    setIsOpen(true);
   };
 
   return (
@@ -427,10 +538,10 @@ export function SponsorsView() {
          <div className="absolute inset-0 bg-black/50 z-50 flex items-start pt-20 justify-center">
            <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
              <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-               <h2 className="text-lg font-bold text-gray-800">Nova Marca Patrocinadora</h2>
+               <h2 className="text-lg font-bold text-gray-800">{editingId ? 'Editar Patrocinador' : 'Nova Marca Patrocinadora'}</h2>
                <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5"/></button>
              </div>
-             <form onSubmit={handleAdd} className="p-6">
+             <form onSubmit={handleSave} className="p-6">
                <div className="space-y-4">
                  <div>
                    <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Marca</label>
@@ -458,10 +569,14 @@ export function SponsorsView() {
                    <label className="block text-sm font-medium text-gray-700 mb-1">Valor Estimado</label>
                    <input value={formData.value} onChange={e => setFormData({...formData, value: e.target.value})} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md" />
                  </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Observações</label>
+                   <textarea rows={3} value={formData.notes || ''} onChange={e => setFormData({...formData, notes: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                 </div>
                </div>
                <div className="mt-6 flex justify-end gap-3">
                  <button type="button" onClick={() => setIsOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md">Cancelar</button>
-                 <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Adicionar</button>
+                 <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Salvar</button>
                </div>
              </form>
            </div>
@@ -473,7 +588,7 @@ export function SponsorsView() {
           <h2 className="text-2xl font-bold text-gray-900">Patrocinadores</h2>
           <p className="text-gray-500">Gestão de cotas e marcas parceiras</p>
         </div>
-        <button onClick={() => setIsOpen(true)} className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm">Nova Marca</button>
+        <button onClick={handleOpenNew} className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm">Nova Marca</button>
       </div>
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <table className="w-full text-left text-sm whitespace-nowrap">
@@ -484,6 +599,7 @@ export function SponsorsView() {
               <th className="px-6 py-3">Cota</th>
               <th className="px-6 py-3">Programa Principal</th>
               <th className="px-6 py-3">Valor Estimado</th>
+              <th className="px-6 py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -498,6 +614,9 @@ export function SponsorsView() {
                   <td className="px-6 py-4 text-gray-600">{sub.tier}</td>
                   <td className="px-6 py-4 text-gray-600">{sub.prog}</td>
                   <td className="px-6 py-4 font-medium text-gray-900">{sub.value}</td>
+                  <td className="px-6 py-4 text-right">
+                    <button onClick={() => handleEdit(sub)} className="text-gray-400 hover:text-indigo-600"><Edit className="w-4 h-4" /></button>
+                  </td>
                 </tr>
              ))}
           </tbody>
@@ -544,15 +663,72 @@ export function PublicationsView({ data }: { data: Episode[] }) {
 }
 
 export function ChecklistView() {
+  const [items, setItems] = useStickyState([
+    { id: 1, text: 'Confirmar participação dos convidados', done: false },
+    { id: 2, text: 'Testar microfones e iluminação', done: false },
+    { id: 3, text: 'Revisar roteiro com apresentadores', done: false },
+    { id: 4, text: 'Checar gravação e backup', done: false },
+  ], 'hubOS_checklist');
+  const [newItem, setNewItem] = useState('');
+
+  const handleAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newItem.trim()) return;
+    setItems([...items, { id: Math.random(), text: newItem, done: false }]);
+    setNewItem('');
+  };
+
+  const toggleItem = (id: number) => {
+    setItems(items.map(i => i.id === id ? { ...i, done: !i.done } : i));
+  };
+  
+  const deleteItem = (id: number) => {
+    setItems(items.filter(i => i.id !== id));
+  };
+
+  const completedCount = items.filter(i => i.done).length;
+  const progress = items.length === 0 ? 0 : Math.round((completedCount / items.length) * 100);
+
   return (
-    <div className="p-8 h-full flex flex-col items-center justify-center text-gray-400 gap-4">
-      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
-        <CheckSquare className="w-8 h-8 text-gray-300" />
+    <div className="p-8 h-full overflow-y-auto">
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Checklist</h2>
+          <p className="text-gray-500">Acompanhe tarefas e pontos da produção</p>
+        </div>
       </div>
-      <div className="text-center">
-        <p className="text-lg font-medium text-gray-900">Checklists de Produção</p>
-        <p className="text-gray-500 mt-1 max-w-sm">Crie checklists padronizados para estúdio, equipamentos e pautas antes da gravação.</p>
-        <button className="mt-4 px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 shadow-sm">Criar Modelo</button>
+      
+      <div className="max-w-3xl">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-gray-800">Progresso das Tarefas</h3>
+            <span className="text-sm font-medium text-indigo-600">{progress}% Concluído</span>
+          </div>
+          <div className="w-full bg-gray-100 rounded-full h-2">
+            <div className="bg-indigo-600 h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <form onSubmit={handleAdd} className="border-b border-gray-200 p-4 bg-gray-50 flex gap-3">
+             <input value={newItem} onChange={e => setNewItem(e.target.value)} type="text" placeholder="Adicionar novo item de checklist..." className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+             <button type="submit" className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700">Adicionar</button>
+          </form>
+          <div className="divide-y divide-gray-100">
+            {items.map(item => (
+              <div key={item.id} className="p-4 flex items-center justify-between hover:bg-gray-50 group">
+                <label className="flex items-center gap-3 cursor-pointer flex-1">
+                  <input type="checkbox" checked={item.done} onChange={() => toggleItem(item.id)} className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600" />
+                  <span className={`${item.done ? 'line-through text-gray-400' : 'text-gray-800'} font-medium`}>{item.text}</span>
+                </label>
+                <button onClick={() => deleteItem(item.id)} className="text-gray-300 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-full hover:bg-red-50">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+            {items.length === 0 && <div className="p-8 text-center text-gray-400">Nenhum item na lista.</div>}
+          </div>
+        </div>
       </div>
     </div>
   );
