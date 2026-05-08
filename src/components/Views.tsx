@@ -257,13 +257,17 @@ export function ProgramasView({ data, programs, setPrograms }: { data: Episode[]
 
 export function CalendarView({ data }: { data: Episode[] }) {
   // Simple representation of a calendar using list
-  const upcoming = [...data].filter(d => d.airDate && d.airDate !== 'Em aberto' && d.airDate !== '-').sort((a, b) => a.airDate.localeCompare(b.airDate));
+  const upcoming = [...data].filter(d => d.recording && d.recording !== 'Em aberto' && d.recording !== '-').sort((a, b) => {
+    const [d1, m1, y1] = a.recording.split('/');
+    const [d2, m2, y2] = b.recording.split('/');
+    return new Date(`${y1}-${m1}-${d1}`).getTime() - new Date(`${y2}-${m2}-${d2}`).getTime();
+  });
   
   return (
     <div className="p-8 h-full overflow-y-auto">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Calendário de Exibição</h2>
-        <p className="text-gray-500">Próximos lançamentos programados</p>
+        <h2 className="text-2xl font-bold text-gray-900">Calendário de Gravação</h2>
+        <p className="text-gray-500">Próximas gravações agendadas</p>
       </div>
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="grid grid-cols-1 divide-y divide-gray-200">
@@ -271,8 +275,8 @@ export function CalendarView({ data }: { data: Episode[] }) {
             <div key={ep.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
               <div className="flex items-center gap-4">
                 <div className="flex flex-col items-center justify-center bg-indigo-50 rounded-lg p-3 min-w-[80px]">
-                  <span className="text-xs text-indigo-600 font-bold uppercase">{ep.airDate.split('/')[1] || 'Mês'}</span>
-                  <span className="text-xl font-bold text-indigo-900">{ep.airDate.split('/')[0] || '--'}</span>
+                  <span className="text-xs text-indigo-600 font-bold uppercase">{ep.recording.split('/')[1] || 'Mês'}</span>
+                  <span className="text-xl font-bold text-indigo-900">{ep.recording.split('/')[0] || '--'}</span>
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900">{ep.program} - {ep.episode}</h4>
