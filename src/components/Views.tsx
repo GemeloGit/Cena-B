@@ -1,0 +1,335 @@
+import React, { useState } from 'react';
+import { Episode } from '../types';
+import { Calendar, Users, Lightbulb, Briefcase, Send, CheckSquare, Clock, Edit, X, Trash2 } from 'lucide-react';
+import { StatusBadge } from './StatusBadge';
+
+export function CalendarView({ data }: { data: Episode[] }) {
+  // Simple representation of a calendar using list
+  const upcoming = [...data].filter(d => d.airDate && d.airDate !== 'Em aberto' && d.airDate !== '-').sort((a, b) => a.airDate.localeCompare(b.airDate));
+  
+  return (
+    <div className="p-8 h-full overflow-y-auto">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">Calendário de Exibição</h2>
+        <p className="text-gray-500">Próximos lançamentos programados</p>
+      </div>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="grid grid-cols-1 divide-y divide-gray-200">
+          {upcoming.map(ep => (
+            <div key={ep.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
+              <div className="flex items-center gap-4">
+                <div className="flex flex-col items-center justify-center bg-indigo-50 rounded-lg p-3 min-w-[80px]">
+                  <span className="text-xs text-indigo-600 font-bold uppercase">{ep.airDate.split('/')[1] || 'Mês'}</span>
+                  <span className="text-xl font-bold text-indigo-900">{ep.airDate.split('/')[0] || '--'}</span>
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900">{ep.program} - {ep.episode}</h4>
+                  <p className="text-sm text-gray-600">{ep.theme}</p>
+                  <div className="flex gap-2 mt-2 items-center text-xs text-gray-500">
+                    <Clock className="w-3 h-3" /> {ep.time} | {ep.platform}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <StatusBadge status={ep.status} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function TeamView() {
+  const [team, setTeam] = useState([
+    { name: 'Ana Costa', role: 'Gerente de Produção', email: 'ana@hub.com', avatar: 'AC' },
+    { name: 'Carlos Mendes', role: 'Diretor Chefe', email: 'carlos@hub.com', avatar: 'CM' },
+    { name: 'Marina Silva', role: 'Apresentadora', email: 'marina@hub.com', avatar: 'MS' },
+    { name: 'João Marcos', role: 'Editor Sênior', email: 'joao@hub.com', avatar: 'JM' },
+    { name: 'Maria Eduarda', role: 'Social Media', email: 'maria@hub.com', avatar: 'ME' },
+  ]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [formData, setFormData] = useState({ name: '', role: '', email: '' });
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+
+  const handleAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    const avatar = formData.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'U';
+    if (editingIndex !== null) {
+      const newTeam = [...team];
+      newTeam[editingIndex] = { ...formData, avatar };
+      setTeam(newTeam);
+    } else {
+      setTeam([...team, { ...formData, avatar }]);
+    }
+    setIsOpen(false);
+    setEditingIndex(null);
+    setFormData({ name: '', role: '', email: '' });
+  };
+
+  const handleEdit = (index: number) => {
+    setFormData(team[index]);
+    setEditingIndex(index);
+    setIsOpen(true);
+  };
+
+  const handleDelete = (index: number) => {
+    const newTeam = [...team];
+    newTeam.splice(index, 1);
+    setTeam(newTeam);
+  };
+
+  const openNew = () => {
+    setEditingIndex(null);
+    setFormData({ name: '', role: '', email: '' });
+    setIsOpen(true);
+  };
+
+  return (
+    <div className="p-8 h-full overflow-y-auto relative">
+       {/* Modal Adicionar/Editar Membro */}
+       {isOpen && (
+         <div className="absolute inset-0 bg-black/50 z-50 flex items-start pt-20 justify-center">
+           <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+             <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+               <h2 className="text-lg font-bold text-gray-800">{editingIndex !== null ? 'Editar Membro' : 'Novo Membro'}</h2>
+               <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5"/></button>
+             </div>
+             <form onSubmit={handleAdd} className="p-6">
+               <div className="space-y-4">
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
+                   <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Cargo / Papel</label>
+                   <input required value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                   <input required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} type="email" className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                 </div>
+               </div>
+               <div className="mt-6 flex justify-end gap-3">
+                 <button type="button" onClick={() => setIsOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md">Cancelar</button>
+                 <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Salvar</button>
+               </div>
+             </form>
+           </div>
+         </div>
+       )}
+
+       <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Equipe e Criadores</h2>
+          <p className="text-gray-500">Gerencie acessos e papéis</p>
+        </div>
+        <button onClick={openNew} className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm">Adicionar Membro</button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {team.map((member, i) => (
+          <div key={i} className="bg-white rounded-xl border border-gray-200 p-5 flex items-start gap-4 shadow-sm hover:shadow-md transition-all group relative">
+            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+              <button onClick={() => handleEdit(i)} className="text-gray-400 hover:text-indigo-600"><Edit className="w-4 h-4" /></button>
+              <button onClick={() => handleDelete(i)} className="text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-100 to-purple-100 text-indigo-700 font-bold flex items-center justify-center text-lg shrink-0">
+              {member.avatar}
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900 pr-12">{member.name}</h3>
+              <p className="text-sm text-indigo-600 font-medium">{member.role}</p>
+              <p className="text-sm text-gray-500 mt-1">{member.email}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function IdeasView({ data }: { data: Episode[] }) {
+  const ideas = data.filter(d => d.status === 'IDEIA');
+  
+  return (
+    <div className="p-8 h-full overflow-y-auto">
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Banco de Ideias</h2>
+          <p className="text-gray-500">Pautas e sugestões para próximos episódios</p>
+        </div>
+        <button className="px-4 py-2 bg-indigo-600 rounded-md text-sm font-medium text-white shadow-sm">+ Nova Ideia</button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {ideas.map((ep) => (
+          <div key={ep.id} className="bg-yellow-50 rounded-xl border border-yellow-200 p-5 shadow-sm">
+            <div className="flex justify-between items-start mb-3">
+              <span className="text-xs font-bold text-yellow-700 uppercase">{ep.program}</span>
+              <button className="text-yellow-600 hover:text-yellow-800"><Edit className="w-4 h-4" /></button>
+            </div>
+            <h3 className="font-bold text-gray-900 mb-2">{ep.theme}</h3>
+            <p className="text-sm text-gray-600 line-clamp-3">{ep.notes || 'Sem descrição.'}</p>
+            <div className="mt-4 flex gap-2">
+               <button className="flex-1 py-1.5 bg-white border border-yellow-300 rounded text-xs font-medium text-yellow-800">Transformar em Roteiro</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function SponsorsView() {
+  const [sponsors, setSponsors] = useState([
+    { name: 'TechBank', status: 'Ativo', tier: 'Master', value: 'R$ 50k / mês', prog: 'Hub Techcast' },
+    { name: 'CloudFoods', status: 'Negociação', tier: 'Apoio', value: 'R$ 15k / mês', prog: 'Papo de Mercado' },
+    { name: 'GamerGear', status: 'Ativo', tier: 'Cotas Locais', value: 'R$ 5k / video', prog: 'Creators em Foco' },
+  ]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [formData, setFormData] = useState({ name: '', status: 'Ativo', tier: 'Master', value: '', prog: '' });
+
+  const handleAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSponsors([...sponsors, formData]);
+    setIsOpen(false);
+    setFormData({ name: '', status: 'Ativo', tier: 'Master', value: '', prog: '' });
+  };
+
+  return (
+    <div className="p-8 h-full overflow-y-auto relative">
+      {/* Modal Nova Marca */}
+      {isOpen && (
+         <div className="absolute inset-0 bg-black/50 z-50 flex items-start pt-20 justify-center">
+           <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+             <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+               <h2 className="text-lg font-bold text-gray-800">Nova Marca Patrocinadora</h2>
+               <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5"/></button>
+             </div>
+             <form onSubmit={handleAdd} className="p-6">
+               <div className="space-y-4">
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Marca</label>
+                   <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                 </div>
+                 <div className="grid grid-cols-2 gap-4">
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                     <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                       <option value="Ativo">Ativo</option>
+                       <option value="Negociação">Negociação</option>
+                       <option value="Pausado">Pausado</option>
+                     </select>
+                   </div>
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-1">Cota</label>
+                     <input required value={formData.tier} onChange={e => setFormData({...formData, tier: e.target.value})} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                   </div>
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Programa Principal</label>
+                   <input value={formData.prog} onChange={e => setFormData({...formData, prog: e.target.value})} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Valor Estimado</label>
+                   <input value={formData.value} onChange={e => setFormData({...formData, value: e.target.value})} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                 </div>
+               </div>
+               <div className="mt-6 flex justify-end gap-3">
+                 <button type="button" onClick={() => setIsOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md">Cancelar</button>
+                 <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Adicionar</button>
+               </div>
+             </form>
+           </div>
+         </div>
+       )}
+
+       <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Patrocinadores</h2>
+          <p className="text-gray-500">Gestão de cotas e marcas parceiras</p>
+        </div>
+        <button onClick={() => setIsOpen(true)} className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm">Nova Marca</button>
+      </div>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <table className="w-full text-left text-sm whitespace-nowrap">
+          <thead className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase font-semibold">
+            <tr>
+              <th className="px-6 py-3">Marca</th>
+              <th className="px-6 py-3">Status</th>
+              <th className="px-6 py-3">Cota</th>
+              <th className="px-6 py-3">Programa Principal</th>
+              <th className="px-6 py-3">Valor Estimado</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+             {sponsors.map((sub, i) => (
+                <tr key={i} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 font-bold text-gray-900">{sub.name}</td>
+                  <td className="px-6 py-4">
+                     <span className={`px-2 py-1 rounded text-xs font-medium ${sub.status === 'Ativo' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                       {sub.status}
+                     </span>
+                  </td>
+                  <td className="px-6 py-4 text-gray-600">{sub.tier}</td>
+                  <td className="px-6 py-4 text-gray-600">{sub.prog}</td>
+                  <td className="px-6 py-4 font-medium text-gray-900">{sub.value}</td>
+                </tr>
+             ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+export function PublicationsView({ data }: { data: Episode[] }) {
+  const published = data.filter(d => d.status === 'FINALIZADO');
+  
+  return (
+    <div className="p-8 h-full overflow-y-auto">
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Publicações Concluídas</h2>
+          <p className="text-gray-500">Histórico de materiais já no ar</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+         {published.map((ep) => (
+           <div key={ep.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+             <div className="h-32 bg-gray-200 flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600">
+                <span className="text-white font-bold opacity-50">{ep.program}</span>
+             </div>
+             <div className="p-4">
+               <div className="flex gap-2 text-xs text-gray-500 mb-2">
+                 <span>{ep.platform}</span>
+                 <span>•</span>
+                 <span>{ep.publication}</span>
+               </div>
+               <h3 className="font-bold text-gray-900 mb-1">{ep.theme}</h3>
+               <p className="text-sm text-gray-500">{ep.episode} - {ep.duration}</p>
+             </div>
+           </div>
+         ))}
+         {published.length === 0 && (
+           <div className="col-span-3 py-12 text-center text-gray-400">Nenhum episódio publicado ainda.</div>
+         )}
+      </div>
+    </div>
+  );
+}
+
+export function ChecklistView() {
+  return (
+    <div className="p-8 h-full flex flex-col items-center justify-center text-gray-400 gap-4">
+      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+        <CheckSquare className="w-8 h-8 text-gray-300" />
+      </div>
+      <div className="text-center">
+        <p className="text-lg font-medium text-gray-900">Checklists de Produção</p>
+        <p className="text-gray-500 mt-1 max-w-sm">Crie checklists padronizados para estúdio, equipamentos e pautas antes da gravação.</p>
+        <button className="mt-4 px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 shadow-sm">Criar Modelo</button>
+      </div>
+    </div>
+  );
+}
